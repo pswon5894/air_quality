@@ -27,6 +27,14 @@ import com.cc.air_quality.retrofit.AirQualityService
 import com.cc.air_quality.retrofit.RetrofitConnection
 import java.io.IOException
 import java.util.Locale
+import com.cc.air_quality.BuildConfig
+import com.cc.air_quality.retrofit.AirQualityResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
@@ -52,6 +60,7 @@ class MainActivity : AppCompatActivity() {
 
         checkAllPermissions()
         updateUI()
+        setRefreshButton()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -91,8 +100,65 @@ class MainActivity : AppCompatActivity() {
         retrofitAPI.getAirQualityData(
             latitude.toString(),
             longitude.toString(),
-            apiKey
+            BuildConfig.AIR_VISUAL_API_KEY
+        ).enqueue(object : Callback<AirQualityResponse>{
+            override fun onResponse(
+                call: Call<AirQualityResponse>,
+                response: Response<AirQualityResponse>
+            ) {
+                if(response.isSuccessful) {
+                    Toast.makeText(this@MainActivity, "최신 데이터 업데이트 완료!", Toast.LENGTH_LONG).show()
+                    response.body()?.let{updateAirUI(it)}
+                }else{
+                    Toast.makeText(this@MainActivity, "데이터를 가져오는 데 실패했습니다.", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onFailure(call: Call<AirQualityResponse?>, t: Throwable) {
+                t.printStackTrace()
+                Toast.makeText(this@MainActivity, "데이터를 가져오는 데 실패했습니다.", Toast.LENGTH_LONG).show()
+
+            }
+        }
+
         )
+    }
+
+    private fun updateAirUI(airQualityData : AirQualityResponse) {
+        val pollutionData = airQualityData.data.current.pollution
+        //수치를 지정
+        binding.tvCount.text = pollutionData.aqius.toString()
+        //측정된 날짜
+        val dateTime = ZonedDateTime.parse(pollutionData.ts).withZoneSameInstant(ZoneId.of("Asia/Seoul")).toLocalDateTime()
+        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+        binding.tvCheckTime.text = dateTime.format(dateFormatter).toString()
+
+        when(pollutionData.aqius){
+            in 0..50 ->{
+                binding.tvTitle.text = "좋음"
+                binding.imgBg.setImageResource(R.drawable.bg_good)
+            }
+            //0..50
+            in 51..150 ->{
+                binding.tvTitle.text = "보통"
+                binding.imgBg.setImageResource(R.drawable.bg_soso)
+            }
+            in 151..200 ->{
+                binding.tvTitle.text = "나쁨"
+                binding.imgBg.setImageResource(R.drawable.bg_bad)
+            }
+            else ->{
+                binding.tvTitle.text = "매우 나쁨"
+                binding.imgBg.setImageResource(R.drawable.bg_worst)
+            }
+        }
+    }
+
+    private fun setRefreshButton(){
+        binding.btnRefresh.setOnClickListener {
+            updateUI()
+        }
     }
 
     private fun getCurrentAddress (latitude : Double, longitude : Double) : Address?{

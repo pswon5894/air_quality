@@ -23,6 +23,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.cc.air_quality.databinding.ActivityMainBinding
+import com.cc.air_quality.retrofit.AirQualityService
+import com.cc.air_quality.retrofit.RetrofitConnection
 import java.io.IOException
 import java.util.Locale
 
@@ -39,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     )
 
     lateinit var getGPSPermissionLauncher : ActivityResultLauncher<Intent>
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,23 +60,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun printAddressInfo(address: Address) {
-        Log.d("AddressInfo", """
-        countryName: ${address.countryName}
-        adminArea: ${address.adminArea}
-        subAdminArea: ${address.subAdminArea}
-        locality: ${address.locality}
-        subLocality: ${address.subLocality}
-        thoroughfare: ${address.thoroughfare}
-        subThoroughfare: ${address.subThoroughfare}
-        featureName: ${address.featureName}
-        postalCode: ${address.postalCode}
-        latitude: ${address.latitude}
-        longitude: ${address.longitude}
-    """.trimIndent())
-    }
-
-
     private fun updateUI() {
         locationProvider = LocationProvider(this@MainActivity)
 
@@ -85,14 +71,28 @@ class MainActivity : AppCompatActivity() {
             val address = getCurrentAddress(latitude, longitude)
 
             address?.let{
-                binding.tvLocationTitle.text="${it.thoroughfare}"
+                binding.tvLocationTitle.text="${it.subLocality}"
                 //도로명
                 binding.tvLocationSubtitle.text="${it.countryName} ${it.adminArea}"
             }
             //2. 미세먼지 농도 가져오고 UI 업데이트
+
+            getAirQualityData(latitude, longitude)
         }else{
             Toast.makeText(this, "위도, 경도 정보를 가져올 수 없습니다.", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun getAirQualityData(latitude: Double, longitude: Double){
+        var retrofitAPI = RetrofitConnection.getInstace().create(
+            AirQualityService::class.java
+        )
+
+        retrofitAPI.getAirQualityData(
+            latitude.toString(),
+            longitude.toString(),
+            apiKey
+        )
     }
 
     private fun getCurrentAddress (latitude : Double, longitude : Double) : Address?{
@@ -208,3 +208,21 @@ class MainActivity : AppCompatActivity() {
 //        }
 //    }
 //화면 상단/하단 시스템바(상태바, 네비게이션바) 때문에 레이아웃이 가려지지 않도록 여백을 자동으로 조정합니다.
+
+//private fun printAddressInfo(address: Address) {
+//    Log.d("AddressInfo", """
+//        countryName: ${address.countryName}
+//        adminArea: ${address.adminArea}
+//        subAdminArea: ${address.subAdminArea}
+//        locality: ${address.locality}
+//        subLocality: ${address.subLocality}
+//        thoroughfare: ${address.thoroughfare}
+//        subThoroughfare: ${address.subThoroughfare}
+//        featureName: ${address.featureName}
+//        postalCode: ${address.postalCode}
+//        latitude: ${address.latitude}
+//        longitude: ${address.longitude}
+//    """.trimIndent())
+//}
+
+//지오코딩 23년 이후로 도로명 제대로 작동하지 않음 도로명은 다른 방법 api 추천

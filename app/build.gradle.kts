@@ -4,6 +4,12 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+//Properties properties = new Properties()
+//properties.load(project.rootProject.file('local.properties').newDataInputStream())
+val properties = Properties()
+properties.load(FileInputStream(rootProject.file("local.properties")))
+
+
 android {
     namespace = "com.cc.air_quality"
     compileSdk = 36
@@ -16,6 +22,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // BuildConfig에 API Key 추가
+        buildConfigField("String", "AIR_VISUAL_API_KEY", properties.getProperty("airVisualKey"))
     }
 
     buildTypes {
@@ -37,6 +46,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

@@ -125,6 +125,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateAirUI(airQualityData : AirQualityResponse) {
+
         val pollutionData = airQualityData.data.current.pollution
         //수치를 지정
         binding.tvCount.text = pollutionData.aqius.toString()

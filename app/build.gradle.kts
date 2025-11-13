@@ -24,12 +24,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // API 키를 BuildConfig에 추가
-        buildConfigField(
-            "String",
-            "AIR_VISUAL_API_KEY",
-            "\"${properties.getProperty("air.visual.api.key")}\""
-        )
+        // BuildConfig에 API Key 추가
+        buildConfigField("String", "AIR_VISUAL_API_KEY", properties.getProperty("AIR_VISUAL_API_KEY"))
     }
 
     buildTypes {

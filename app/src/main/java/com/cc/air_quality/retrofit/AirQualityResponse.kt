@@ -30,7 +30,7 @@ data class AirQualityResponse(
                 val tp: Int,
                 val ts: String,
                 val wd: Int,
-                val ws: Int
+                val ws: Double
             )
         }
 
